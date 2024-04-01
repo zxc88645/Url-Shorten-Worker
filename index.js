@@ -201,38 +201,52 @@ async function handleRequest(request) {
         "Access-Control-Allow-Methods": "POST",
       },
     });
-  }
+  } else {
+    const params = new URL(request.url).searchParams;
+    const fetchOnlyParam = params.get("fetchOnly");
+    const fetchOnly = fetchOnlyParam && fetchOnlyParam.toLowerCase() === "true";
+    const requestURL = new URL(request.url);
+    const path = requestURL.pathname.split("/")[1];
+    console.log(path);
+    if (!path) {
+      const html = await fetch(
+        `https://cdn.jsdelivr.net/gh/${github_repo}${github_version}/index.html`
+      );
+      const text = (await html.text())
+        .replaceAll("###GITHUB_REPO###", github_repo)
+        .replaceAll("###GITHUB_VERSION###", github_version)
+        .replaceAll("###DEMO_NOTICE###", demo_notice);
 
-  const requestURL = new URL(request.url);
-  const path = requestURL.pathname.split("/")[1];
-  console.log(path);
-  if (!path) {
-    const html = await fetch(
-      `https://cdn.jsdelivr.net/gh/${github_repo}${github_version}/index.html`
-    );
-    const text = (await html.text())
-      .replaceAll("###GITHUB_REPO###", github_repo)
-      .replaceAll("###GITHUB_VERSION###", github_version)
-      .replaceAll("###DEMO_NOTICE###", demo_notice);
-
-    return new Response(text, {
-      headers: {
-        "content-type": "text/html;charset=UTF-8",
-      },
-    });
+      return new Response(text, {
+        headers: {
+          "content-type": "text/html;charset=UTF-8",
+        },
+      });
+    }
+    const url = await load_url(path);
+    if (!url) {
+      // 找不到或者超时直接404,
+      console.log("not found");
+      return new Response(html404, {
+        headers: {
+          "content-type": "text/html;charset=UTF-8",
+        },
+        status: 404,
+      });
+    }
+    if (fetchOnly) {
+      // 如果需要使用 fetch，則發送 fetch 請求並返回內容
+      const response = await fetch(url);
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers,
+      });
+    } else {
+      // 否則預設返回 302 重定向
+      return Response.redirect(url, 302);
+    }
   }
-  const url = await load_url(path);
-  if (!url) {
-    // 找不到或者超时直接404,
-    console.log("not found");
-    return new Response(html404, {
-      headers: {
-        "content-type": "text/html;charset=UTF-8",
-      },
-      status: 404,
-    });
-  }
-  return Response.redirect(url, 302);
 }
 
 addEventListener("fetch", async (event) => {

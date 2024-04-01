@@ -1,92 +1,91 @@
-# 020短链
-利用Cloudflare Worker实现的简单免费的短链接平台，  
-主要支持自用以及防滥用演示，  
+# owotool 短連結生成器
+
+利用 Cloudflare Worker 實現的簡單免費的短連結平台，
+主要支援自用以及防濫用演示，
 
 # API
 
-[中文API文档](API.md)
+[中文 API 文档](API.md)
 
 # Getting start
-### 去Workers KV中创建一个命名空间
+
+### 去 Workers KV 建立一個命名空間
 
 Go to Workers KV and create a namespace.
 
 ![img](readme/20201205232805.png)
 
-### 去Worker的Settings选选项卡中绑定KV Namespace
+### 去 Worker 的 Settings 選選項卡中綁定 KV Namespace
 
 Bind an instance of a KV Namespace to access its data in a Worker.
 
 ![img](readme/20201205232536.png)
 
-### 其中Variable name填写`LINKS`, KV namespace填写你刚刚创建的命名空间
+### 其中 Variable name 填入`LINKS`, KV namespace 填入你剛剛建立的命名空間
 
 Where Variable name should set as `LINKS` and KV namespace is the namespace you just created in the first step.
 
 ![img](readme/20201205232704.png)
 
-### 复制本项目中的`index.js`的代码到Cloudflare Worker 
+### 複製本專案中的`index.js`的程式碼到 Cloudflare Worker
 
-Copy the `index.js` code from this project to Cloudflare Worker. 
+Copy the `index.js` code from this project to Cloudflare Worker.
 
-### 调整超时设置
+### 調整白名單
 
-演示模式生成的短链接超时无法访问，  
-白名单或者密码正确情况超时设置无效，  
-修改脚本开头的变量*shorten_timeout*, 单位毫秒，0表示不设置超时，
+白名單中的網域設定短連結無視超時，
+修改腳本開頭的變數*white_list*, 是個 json 數組，寫頂級域名就可以，自動通過頂級域名和所有二級域名，
 
-### 调整白名单
+### 關閉演示模式
 
-白名单中的域名设置短链接无视超时，  
-修改脚本开头的变量*white_list*, 是个json数组，写顶级域名就可以，自动通过顶级域名和所有二级域名，
+只有示範模式開啟才允許訪客無密碼新增非白名單位址，超時短連結會失效，
+修改腳本開頭的變數*demo_mode*，為 true 開啟演示，為 false 無密碼且非白名單請求不予受理，
 
-### 关闭演示模式
+### 自動刪除示範記錄
 
-只有演示模式开启才允许访客无密码添加非白名单地址，超时短链接会失效，  
-修改脚本开头的变量*demo_mode*，为true开启演示，为false无密码且非白名单请求不受理，
+針對演示模式開啟情況下的超時失效的短連結記錄是否自動刪除，
+修改腳本開頭的變數*remove_completely*，為 true 自動刪除逾時的演示短連結記錄，否則僅是標記過期，以便在後台查詢歷史記錄，
 
-### 自动删除演示记录
+### 修改密碼
 
-针对演示模式开启情况下的超时失效的短链接记录是否自动删除，  
-修改脚本开头的变量*remove_completely*，为true自动删除超时的演示短链接记录，否则仅是标记过期，以便在后台查询历史记录，
+網頁有個隱藏輸入框可以輸入密碼，
+密碼正確情況無視白名單和超時設置，且支持自定義短鏈接，
+修改腳本開頭的變數*password*，這個私密資訊比較建議直接在環境變數裡配置，
 
-### 修改密码
+### 修改短鍊長度
 
-网页有个隐藏输入框可以输入密码，  
-密码正确情况无视白名单和超时设置，且支持自定义短链接，  
-修改脚本开头的变量*password*，这个私密信息比较建议直接在环境变量里配置，
+短鍊長度就是隨機產生的 key 是短連結的 path 部分的長度，
+長度不夠時容易重複，遇到重複時會自動延長，
+修改腳本開頭的變數*default_len*,
 
-### 修改短链长度
-
-短链长度就是随机生成的key也就是短链接的path部分的长度，  
-长度不够时容易出现重复，遇到重复时会自动延长，  
-修改脚本开头的变量*default_len*,
-
-### 以上几个配置都可以在worker -> 设置 -> 环境变量中配置，key均为对应大写，
+### 以上幾個配置都可以在 worker -> 設定 -> 環境變數中配置，key 皆為對應大寫，
 
 ![img](readme/cfWorderEnvironment.png)
 
-### 点击Save and Deploy
+### 點選 Save and Deploy
 
 Click Save and Deploy
 
 # Demo
+
 https://020.name
- 
+
 Note: Because someone abuse this demo website, all the generated link may be deleted at any time. For long-term use, please deploy your own.
 
-注意：由于该示例服务被人滥用，用于转发诈骗网站，故所有由demo网站生成的链接随时可能失效，如需长期使用请自行搭建。
+注意：由於此範例服務被濫用，用於轉發詐騙網站，故所有由 demo 網站產生的連結隨時可能失效，如需長期使用請自行搭建。
 
 ## 感谢
-项目基于[xyTom/Url-Shorten-Worker](https://github.com/xyTom/Url-Shorten-Worker)[(MIT)](https://github.com/xyTom/Url-Shorten-Worker/blob/main/LICENSE)  
-1. 改进了正则匹配，
-1. 添加了超时判断处理，
-1. 添加了白名单支持，
-1. 添加了演示模式，
-1. 添加了隐藏密码支持，
-1. 添加了隐藏自定义短链接支持，
-1. 所有配置可以脱离脚本在环境变量配置，
-1. 支持回车键提交，
-1. 生成的短链接包含协议https，
-1. 添加了短链长度设置和自动延长，
-1. 支持开关自动删除演示过期记录，
+
+專案基於[xyTom/Url-Shorten-Worker](https://github.com/xyTom/Url-Shorten-Worker)[(MIT)](https://github.com/xyTom/Url-Shorten-Worker/blob/main/LICENSE)
+
+1. 改進了正規匹配。
+2. 增加了超時判斷處理。
+3. 新增了白名單支持。
+4. 新增了演示模式。
+5. 新增了隱藏密碼支持。
+6. 新增了隱藏自訂短連結支持。
+7. 所有配置可以脫離腳本在環境變數配置。
+8. 支援回車鍵提交。
+9. 產生的短連結包含協定 https。
+10. 新增了短鍊長度設定和自動延長。
+11. 支援開關自動刪除演示過期記錄。
